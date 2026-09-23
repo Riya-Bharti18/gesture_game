@@ -55,5 +55,4 @@ gesture_game/
 │   ├── types.ts            # TypeScript interface definitions
 │   └── style.css           # Glassmorphism styling & layout
 └── dist/                   # Production build output
-```
-vercel link: gesture-game-hiuk.vercel.app
+``
