@@ -21,36 +21,6 @@ Slice fruits in real time using your index finger in front of your webcam, or sw
 
 ---
 
-## 🚀 Quick Setup & Installation
-
-### Prerequisites
-- [Node.js](https://nodejs.org/) (v18.0.0 or higher recommended)
-- `npm` (comes with Node.js)
-
-### Setup Commands
-
-1. **Install Dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Start Local Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser.
-
-3. **Build for Production**:
-   ```bash
-   npm run build
-   ```
-
-4. **Preview Production Build**:
-   ```bash
-   npm run preview
-   ```
-
----
 
 ## 🎮 Game Controls & Rules
 
