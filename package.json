@@ -3,14 +3,17 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mediapipe/camera_utils": "latest",
-    "@mediapipe/hands": "latest"
+    "@mediapipe/camera_utils": "0.3.1675466862",
+    "@mediapipe/hands": "0.4.1675469240"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
