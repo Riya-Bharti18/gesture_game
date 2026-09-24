@@ -1,4 +1,4 @@
-import { GameState, Point } from './types';
+import { FloatingText, GameState, Point } from './types';
 import { Fruit } from './Fruit';
 import { Particle } from './Particle';
 import { SoundEffects } from './SoundEffects';
@@ -21,6 +21,7 @@ export class Game {
   public fruits: Fruit[] = [];
   public particles: Particle[] = [];
   public trail: Point[] = [];
+  public floatingTexts: FloatingText[] = [];
   public score = 0;
   public highScore = 0;
   public combo = 0;
@@ -29,6 +30,7 @@ export class Game {
   public startTime = 0;
   public nextSpawn = 0;
   public gameOverReason = '';
+  public flashRedTimer = 0;
 
   private sound: SoundEffects;
   private tracker: HandTracker;
@@ -114,6 +116,8 @@ export class Game {
     this.fruits = [];
     this.particles = [];
     this.trail = [];
+    this.floatingTexts = [];
+    this.flashRedTimer = 0;
     this.score = 0;
     this.combo = 0;
     this.comboTimer = 0;
@@ -201,10 +205,13 @@ export class Game {
         fruit.slice();
 
         if (fruit.isBomb) {
-          this.state = 'gameover';
-          this.gameOverReason = 'Sliced a Bomb!';
+          fruit.alive = false;
           this.sound.playBombExplosion();
-          this.saveHighScore();
+          this.sound.playLifeLost();
+          this.combo = 0;
+          this.comboTimer = 0;
+          this.lives -= 1;
+          this.flashRedTimer = 0.5;
 
           for (let i = 0; i < 40; i++) {
             this.particles.push(
@@ -217,6 +224,14 @@ export class Game {
                 radiusMax: 9,
               })
             );
+          }
+
+          if (this.lives <= 0) {
+            this.state = 'gameover';
+            this.gameOverReason = 'Sliced a Bomb & Out of Lives!';
+            this.saveHighScore();
+          } else {
+            this.addFloatingText('-1 ❤️', fruit.x, fruit.y);
           }
         } else {
           this.combo += 1;
@@ -266,6 +281,17 @@ export class Game {
         this.trail = [];
       }
 
+      if (this.flashRedTimer > 0) {
+        this.flashRedTimer = Math.max(0, this.flashRedTimer - dt);
+      }
+
+      for (const ft of this.floatingTexts) {
+        ft.age += dt;
+        ft.y += ft.vy * dt;
+        ft.alpha = Math.max(0, 1 - ft.age / ft.life);
+      }
+      this.floatingTexts = this.floatingTexts.filter((ft) => ft.age < ft.life);
+
       if (this.comboTimer > 0) {
         this.comboTimer -= dt;
         if (this.comboTimer <= 0) {
@@ -281,6 +307,9 @@ export class Game {
         fruit.update(dt, this.gravity, this.height, this.particles);
         if (!fruit.alive && !fruit.sliced && !fruit.isBomb) {
           this.lives -= 1;
+          this.sound.playLifeLost();
+          this.flashRedTimer = 0.5;
+          this.addFloatingText('-1 ❤️', fruit.x, Math.min(fruit.y - 20, this.height - 60));
           if (this.lives <= 0) {
             this.state = 'gameover';
             this.gameOverReason = 'Out of Lives!';
@@ -302,6 +331,18 @@ export class Game {
         this.saveHighScore();
       }
     }
+  }
+
+  public addFloatingText(text: string, x: number, y: number): void {
+    this.floatingTexts.push({
+      text,
+      x,
+      y,
+      vy: -60,
+      alpha: 1.0,
+      life: 1.0,
+      age: 0,
+    });
   }
 
   public draw(activePoint: Point | null = null): void {
@@ -339,13 +380,34 @@ export class Game {
     // 5. Draw Blade Slice Trail
     this.drawTrail();
 
-    // 6. Draw Fingertip Cursor Dot Indicator
+    // 6. Draw Red Flash Vignette on Life Loss
+    if (this.flashRedTimer > 0) {
+      this.ctx.save();
+      this.ctx.fillStyle = `rgba(255, 71, 87, ${this.flashRedTimer * 0.7})`;
+      this.ctx.fillRect(0, 0, this.width, this.height);
+      this.ctx.restore();
+    }
+
+    // 7. Draw Floating Popups (-1 ❤️, Combos)
+    for (const ft of this.floatingTexts) {
+      this.ctx.save();
+      this.ctx.globalAlpha = ft.alpha;
+      this.ctx.font = '800 30px "Outfit", sans-serif';
+      this.ctx.fillStyle = '#ff4757';
+      this.ctx.shadowColor = '#000000';
+      this.ctx.shadowBlur = 8;
+      this.ctx.textAlign = 'center';
+      this.ctx.fillText(ft.text, ft.x, ft.y);
+      this.ctx.restore();
+    }
+
+    // 8. Draw Fingertip Cursor Dot Indicator
     const targetPoint = this.tracker.currentInputMode === 'hand' ? activePoint : this.mousePos;
     if (targetPoint) {
       this.drawFingertipCursor(targetPoint.x, targetPoint.y);
     }
 
-    // 7. Draw HUD & State Screens
+    // 9. Draw HUD & State Screens
     if (this.state === 'menu') {
       this.drawMenu();
     } else if (this.state === 'playing') {
@@ -427,11 +489,12 @@ export class Game {
     this.ctx.fillText(`Time  ${t.toString().padStart(2, '0')}s`, this.width - 220, 58);
 
     // Lives Badge (Hearts)
-    this.drawGlassPanel(20, 96, 160, 46);
-    this.ctx.fillStyle = '#ff4757';
+    this.drawGlassPanel(20, 96, 180, 46);
     this.ctx.font = '24px "Outfit", sans-serif';
-    const hearts = '❤️ '.repeat(Math.max(0, this.lives));
-    this.ctx.fillText(hearts, 34, 128);
+    const totalLives = this.startingLives;
+    const remainingLives = Math.max(0, Math.min(totalLives, this.lives));
+    const hearts = '❤️ '.repeat(remainingLives) + '🖤 '.repeat(totalLives - remainingLives);
+    this.ctx.fillText(hearts.trim(), 34, 128);
 
     // Combo Alert Badge
     if (this.combo > 1) {
@@ -454,7 +517,7 @@ export class Game {
 
     this.ctx.fillStyle = '#a0a5b5';
     this.ctx.font = '600 18px "Inter", sans-serif';
-    this.ctx.fillText('Slice fruits with your index finger in real time!', this.width / 2, this.height / 2 - 20);
+    this.ctx.fillText('You get 3 Lives! Slicing bombs or missing fruit loses 1 ❤️', this.width / 2, this.height / 2 - 20);
 
     this.ctx.fillStyle = '#ffd32a';
     this.ctx.font = '700 24px "Outfit", sans-serif';

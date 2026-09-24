@@ -30,9 +30,8 @@ Slice fruits in real time using your index finger in front of your webcam, or sw
 - **Sound Toggle (Top Right)** — Mute or enable sound effects.
 
 ### Rules
-- **3 Lives**: Let a fruit drop off-screen without slicing it = lose 1 life.
-- **Bombs**: Slicing a bomb detonates it and triggers instant Game Over!
-- **60 Second Timer**: Score as many points as possible before time runs out.
+- **3 Lives System**: Each player starts with 3 hearts (❤️ ❤️ ❤️). Slicing a bomb or letting a fruit drop off-screen deducts 1 heart. After losing 1 heart, you can continue playing for your remaining 2 hearts.
+- **Game Over & Scoring**: The game ends when all 3 lives are lost or the 60-second timer expires. Your total accumulated score is displayed alongside your high score.
 - **Combos**: Slice multiple fruits rapidly within 1 second to build combo multipliers and score extra points!
 
 ---

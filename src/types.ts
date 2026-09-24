@@ -54,3 +54,14 @@ export interface HandLandmark {
 export interface HandResults {
   multiHandLandmarks?: HandLandmark[][];
 }
+
+export interface FloatingText {
+  text: string;
+  x: number;
+  y: number;
+  vy: number;
+  alpha: number;
+  life: number;
+  age: number;
+}
+
